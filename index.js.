@@ -1,0 +1,29 @@
+hereconst { Client, GatewayIntentBits } = require('discord.js');
+const fetch = require('node-fetch');
+const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
+
+client.on('messageCreate', async (msg) => {
+    if (msg.content.startsWith('!check ')) {
+        const placeId = msg.content.split(' ')[1];
+        // Roblox API to get game info
+        const res = await fetch(`https://games.roblox.com/v1/games/multiget-place-details?placeIds=${placeId}`);
+        const data = await res.json();
+        
+        if (data[0]) {
+            const players = data[0].playerCount || 0;
+            const name = data[0].name.toLowerCase();
+            
+            let status = "✅ Clean";
+            // Logic: 1k players OR less than 10 players = suspicious
+            if (players >= 1000 || players < 10 || name.includes("infected")) {
+                status = "🚨 The Game is absolutely infected";
+            }
+            
+            msg.reply(`**Game Name:** ${data[0].name}\n**Current Players:** ${players}\n**Verdict:** ${status}`);
+        } else {
+            msg.reply("Could not find a game with that ID.");
+        }
+    }
+});
+
+client.login('YOUR_DISCORD_BOT_TOKEN_HERE');
